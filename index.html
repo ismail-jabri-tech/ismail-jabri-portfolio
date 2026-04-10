@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ismail Jabri — Senior Data Engineer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #06070a;
+    --bg2: #0d0f14;
+    --bg3: #12151c;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --accent: #00d4aa;
+    --accent2: #0066ff;
+    --accent3: #ff6b35;
+    --text: #e8eaf0;
+    --muted: #7a8299;
+    --muted2: #4a5168;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* GRID BG */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,170,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,170,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 1.2rem 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(6,7,10,0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .nav-logo span { color: var(--accent); }
+
+  .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* SECTIONS */
+  section { position: relative; z-index: 1; }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 8rem 4rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 800px;
+    height: 800px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,212,170,0.06) 0%, transparent 70%);
+    top: -200px;
+    right: -200px;
+    pointer-events: none;
+  }
+
+  .hero-glow2 {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,102,255,0.05) 0%, transparent 70%);
+    bottom: 0;
+    left: 100px;
+    pointer-events: none;
+  }
+
+  .hero-content {
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid rgba(0,212,170,0.25);
+    padding: 0.4rem 1rem;
+    border-radius: 2rem;
+    margin-bottom: 2.5rem;
+    background: rgba(0,212,170,0.05);
+  }
+
+  .hero-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .hero-name {
+    font-family: var(--font-display);
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-name .first { color: var(--text); display: block; }
+  .hero-name .last {
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255,255,255,0.15);
+    display: block;
+  }
+
+  .hero-title {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.05em;
+  }
+
+  .hero-title::before { content: '> '; opacity: 0.5; }
+
+  .hero-desc {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 600px;
+    line-height: 1.7;
+    margin-bottom: 3rem;
+    font-weight: 300;
+  }
+
+  .hero-desc strong { color: var(--text); font-weight: 500; }
+
+  .hero-ctas {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 4rem;
+  }
+
+  .btn-primary {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.85rem 2rem;
+    border-radius: 0.3rem;
+    text-decoration: none;
+    background: var(--accent);
+    color: #000;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover {
+    background: #00ffcc;
+    transform: translateY(-2px);
+  }
+
+  .btn-outline {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.85rem 2rem;
+    border-radius: 0.3rem;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 400;
+    transition: all 0.2s;
+    border: 1px solid var(--border2);
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .btn-outline:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 3rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-stat {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero-stat .num {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .hero-stat .num span { color: var(--accent); }
+
+  .hero-stat .label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 0.3rem;
+  }
+
+  /* SCROLL INDICATOR */
+  .scroll-hint {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--muted2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    animation: fadeInUp 1s 1.5s both;
+  }
+
+  .scroll-line {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, var(--accent), transparent);
+    animation: scrollLine 2s 1.5s infinite;
+  }
+
+  @keyframes scrollLine {
+    0% { height: 0; opacity: 0; }
+    50% { height: 60px; opacity: 1; }
+    100% { height: 60px; opacity: 0; transform: translateY(30px); }
+  }
+
+  /* SECTION COMMON */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 4rem;
+  }
+
+  .section-header {
+    margin-bottom: 4rem;
+  }
+
+  .section-tag {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  /* ABOUT / SKILLS */
+  #about {
+    padding: 8rem 0;
+  }
+
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: start;
+  }
+
+  .about-text p {
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.8;
+    margin-bottom: 1.2rem;
+    font-weight: 300;
+  }
+
+  .about-text p strong { color: var(--text); font-weight: 500; }
+
+  .langs {
+    display: flex;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+  }
+
+  .lang-pill {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 2rem;
+    letter-spacing: 0.06em;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .lang-pill.native { border-color: rgba(0,212,170,0.3); color: var(--accent); background: rgba(0,212,170,0.05); }
+
+  /* SKILLS GRID */
+  .skills-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .skill-category {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 0.6rem;
+    padding: 1.2rem 1.5rem;
+    transition: border-color 0.2s;
+  }
+
+  .skill-category:hover { border-color: var(--border2); }
+
+  .skill-cat-label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--muted2);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+  }
+
+  .skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .skill-tag {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 0.3rem;
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    border: 1px solid var(--border);
+    letter-spacing: 0.03em;
+    transition: all 0.15s;
+  }
+
+  .skill-tag:hover {
+    background: rgba(0,212,170,0.08);
+    border-color: rgba(0,212,170,0.25);
+    color: var(--accent);
+  }
+
+  .skill-tag.highlight {
+    background: rgba(0,212,170,0.08);
+    border-color: rgba(0,212,170,0.2);
+    color: var(--accent);
+  }
+
+  /* EXPERIENCE */
+  #experience {
+    padding: 8rem 0;
+    background: linear-gradient(to bottom, transparent, rgba(0,212,170,0.01), transparent);
+  }
+
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--accent), var(--border), transparent);
+  }
+
+  .exp-item {
+    position: relative;
+    padding-bottom: 3.5rem;
+    padding-left: 2.5rem;
+    opacity: 0;
+    transform: translateX(-20px);
+    animation: slideIn 0.6s forwards;
+  }
+
+  .exp-item:nth-child(1) { animation-delay: 0.1s; }
+  .exp-item:nth-child(2) { animation-delay: 0.2s; }
+  .exp-item:nth-child(3) { animation-delay: 0.3s; }
+  .exp-item:nth-child(4) { animation-delay: 0.4s; }
+
+  @keyframes slideIn {
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .exp-item::before {
+    content: '';
+    position: absolute;
+    left: -2rem;
+    top: 0.5rem;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 12px rgba(0,212,170,0.5);
+  }
+
+  .exp-item.current::before {
+    animation: dotPulse 2s infinite;
+  }
+
+  @keyframes dotPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,170,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(0,212,170,0); }
+  }
+
+  .exp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .exp-role {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .exp-period {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    border: 1px solid rgba(0,212,170,0.2);
+    padding: 0.25rem 0.7rem;
+    border-radius: 2rem;
+    white-space: nowrap;
+    background: rgba(0,212,170,0.05);
+  }
+
+  .exp-company {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+  }
+
+  .exp-bullets {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .exp-bullets li {
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.6;
+    font-weight: 300;
+    padding-left: 1rem;
+    position: relative;
+  }
+
+  .exp-bullets li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--muted2);
+    font-size: 0.75rem;
+  }
+
+  .exp-bullets li strong { color: var(--text); font-weight: 500; }
+
+  .exp-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1rem;
+  }
+
+  .stack-tag {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    padding: 0.2rem 0.55rem;
+    background: rgba(0,102,255,0.08);
+    border: 1px solid rgba(0,102,255,0.2);
+    color: #6699ff;
+    border-radius: 0.25rem;
+    letter-spacing: 0.04em;
+  }
+
+  /* CERTIFICATIONS */
+  #certifications {
+    padding: 8rem 0;
+  }
+
+  .certs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .cert-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 0.6rem;
+    padding: 1.2rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cert-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,212,170,0.03) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .cert-card:hover {
+    border-color: rgba(0,212,170,0.25);
+    transform: translateY(-2px);
+  }
+
+  .cert-card:hover::before { opacity: 1; }
+
+  .cert-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .cert-icon.aws { background: rgba(255,153,0,0.12); }
+  .cert-icon.gcp { background: rgba(66,133,244,0.12); }
+  .cert-icon.azure { background: rgba(0,120,212,0.12); }
+  .cert-icon.databricks { background: rgba(255,64,36,0.12); }
+  .cert-icon.other { background: rgba(255,255,255,0.06); }
+
+  .cert-name {
+    font-size: 0.82rem;
+    color: var(--text);
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .cert-issuer {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--muted2);
+    margin-top: 0.15rem;
+    letter-spacing: 0.05em;
+  }
+
+  /* CLOUD COVERAGE */
+  #cloud {
+    padding: 8rem 0;
+    background: linear-gradient(to bottom, transparent, rgba(0,102,255,0.02), transparent);
+  }
+
+  .cloud-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .cloud-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 0.8rem;
+    padding: 2rem;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cloud-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .cloud-card.gcp::after { background: linear-gradient(90deg, #4285F4, #34A853, #FBBC05, #EA4335); }
+  .cloud-card.aws::after { background: linear-gradient(90deg, #FF9900, #232F3E); }
+  .cloud-card.azure::after { background: #0078D4; }
+
+  .cloud-card:hover { border-color: var(--border2); transform: translateY(-3px); }
+  .cloud-card:hover::after { opacity: 1; }
+
+  .cloud-logo {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 1.2rem;
+  }
+
+  .cloud-logo.gcp { color: #4285F4; }
+  .cloud-logo.aws { color: #FF9900; }
+  .cloud-logo.azure { color: #0078D4; }
+
+  .cloud-services {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .cloud-svc {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    padding: 0.25rem 0.6rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 0.25rem;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+  }
+
+  .cloud-cert-badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--accent);
+    border: 1px solid rgba(0,212,170,0.2);
+    padding: 0.2rem 0.5rem;
+    border-radius: 2rem;
+    margin-bottom: 0.8rem;
+    letter-spacing: 0.08em;
+    background: rgba(0,212,170,0.05);
+  }
+
+  /* CONTACT */
+  #contact {
+    padding: 8rem 0 6rem;
+  }
+
+  .contact-inner {
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 4rem;
+    background: var(--bg2);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .contact-inner::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,212,170,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .contact-inner .section-title {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .contact-inner p {
+    color: var(--muted);
+    font-weight: 300;
+    font-size: 1rem;
+    max-width: 500px;
+    margin: 0 auto 2.5rem;
+  }
+
+  .contact-links {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+
+  .contact-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    transition: color 0.2s;
+    padding: 0.7rem 1.2rem;
+    border: 1px solid var(--border);
+    border-radius: 0.4rem;
+    background: rgba(255,255,255,0.02);
+  }
+
+  .contact-link:hover { color: var(--accent); border-color: rgba(0,212,170,0.25); }
+
+  /* FOOTER */
+  footer {
+    padding: 2rem 4rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  footer p {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--muted2);
+    letter-spacing: 0.06em;
+  }
+
+  footer p span { color: var(--accent); }
+
+  /* ANIMATIONS */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* HERO ANIMATE */
+  .hero-badge { animation: fadeInUp 0.6s 0.2s both; }
+  .hero-name { animation: fadeInUp 0.6s 0.4s both; }
+  .hero-title { animation: fadeInUp 0.6s 0.5s both; }
+  .hero-desc { animation: fadeInUp 0.6s 0.6s both; }
+  .hero-ctas { animation: fadeInUp 0.6s 0.7s both; }
+  .hero-stats { animation: fadeInUp 0.6s 0.8s both; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    nav { padding: 1.2rem 1.5rem; }
+    .nav-links { gap: 1.5rem; }
+    #hero, .container { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .about-grid { grid-template-columns: 1fr; gap: 3rem; }
+    .cloud-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+    .contact-inner { padding: 2.5rem 1.5rem; }
+  }
+
+  @media (max-width: 600px) {
+    .nav-links { display: none; }
+    .hero-stats { gap: 1.5rem; }
+  }
+
+  /* HORIZONTAL RULE */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0 4rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">IJ<span>.</span></a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#certifications">Certifications</a></li>
+    <li><a href="#cloud">Cloud</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-content">
+    <div class="hero-badge">Available · Canada Permanent Resident</div>
+    <h1 class="hero-name">
+      <span class="first">Ismail</span>
+      <span class="last">Jabri</span>
+    </h1>
+    <p class="hero-title">Senior Data Engineer · Cloud &amp; Data Platforms</p>
+    <p class="hero-desc">
+      Building <strong>scalable lakehouse architectures</strong> and high-performance data pipelines at scale.
+      Specialized in <strong>Databricks, PySpark, Delta Lake</strong>, and multi-cloud platforms.
+      6+ years turning raw data into production-grade, analytics-ready gold.
+    </p>
+    <div class="hero-ctas">
+      <a href="mailto:ismail.jabri2025@gmail.com" class="btn-primary">Get In Touch</a>
+      <a href="#experience" class="btn-outline">View Experience</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="num">6<span>+</span></span>
+        <span class="label">Years Experience</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num">17<span>+</span></span>
+        <span class="label">Countries Served</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num">3</span>
+        <span class="label">Cloud Platforms</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num">10<span>+</span></span>
+        <span class="label">Certifications</span>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    scroll
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ABOUT & SKILLS -->
+<section id="about">
+  <div class="container">
+    <div class="about-grid">
+      <div class="about-text fade-in">
+        <div class="section-header">
+          <span class="section-tag">// About</span>
+          <h2 class="section-title">The Engineer<br>Behind the Data</h2>
+        </div>
+        <p>
+          I'm a bilingual Senior Data Engineer with a deep passion for building the infrastructure that makes data <strong>fast, reliable, and meaningful</strong>. From raw multi-country telecom datasets to fraud detection pipelines, I architect systems that scale.
+        </p>
+        <p>
+          Currently at <strong>Sofrecom (Orange Group)</strong>, engineering Databricks lakehouse pipelines processing data across 17 countries — Bronze to Gold, always production-ready.
+        </p>
+        <p>
+          Certified across <strong>Databricks, GCP, AWS, and Azure</strong>. I don't just use cloud platforms — I master them.
+        </p>
+        <div class="langs">
+          <span class="lang-pill native">Arabic — Native</span>
+          <span class="lang-pill native">English — C1</span>
+          <span class="lang-pill native">French — Fluent</span>
+          <span class="lang-pill">German — Conversational</span>
+        </div>
+      </div>
+
+      <div class="skills-grid fade-in">
+        <div class="skill-category">
+          <div class="skill-cat-label">Core Stack</div>
+          <div class="skill-tags">
+            <span class="skill-tag highlight">PySpark</span>
+            <span class="skill-tag highlight">Databricks</span>
+            <span class="skill-tag highlight">Python</span>
+            <span class="skill-tag highlight">SQL</span>
+            <span class="skill-tag">Scala</span>
+            <span class="skill-tag">Java</span>
+          </div>
+        </div>
+        <div class="skill-category">
+          <div class="skill-cat-label">Data Engineering</div>
+          <div class="skill-tags">
+            <span class="skill-tag highlight">Delta Lake</span>
+            <span class="skill-tag highlight">Apache Iceberg</span>
+            <span class="skill-tag">dbt</span>
+            <span class="skill-tag">Airflow</span>
+            <span class="skill-tag">Kafka</span>
+            <span class="skill-tag">Starburst / Trino</span>
+            <span class="skill-tag">Dataiku DSS</span>
+            <span class="skill-tag">Hadoop</span>
+          </div>
+        </div>
+        <div class="skill-category">
+          <div class="skill-cat-label">Architecture</div>
+          <div class="skill-tags">
+            <span class="skill-tag highlight">Medallion Architecture</span>
+            <span class="skill-tag">Data Mesh</span>
+            <span class="skill-tag">Data-as-a-Product</span>
+            <span class="skill-tag">Collibra</span>
+            <span class="skill-tag">Azure Purview</span>
+          </div>
+        </div>
+        <div class="skill-category">
+          <div class="skill-cat-label">Platform & DevOps</div>
+          <div class="skill-tags">
+            <span class="skill-tag">Kubernetes</span>
+            <span class="skill-tag">Docker</span>
+            <span class="skill-tag">Terraform</span>
+            <span class="skill-tag">GitLab CI/CD</span>
+            <span class="skill-tag">Prometheus</span>
+            <span class="skill-tag">Grafana</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- EXPERIENCE -->
+<section id="experience">
+  <div class="container">
+    <div class="section-header fade-in">
+      <span class="section-tag">// Experience</span>
+      <h2 class="section-title">Where I've Built</h2>
+    </div>
+
+    <div class="timeline">
+
+      <div class="exp-item current fade-in">
+        <div class="exp-header">
+          <div>
+            <div class="exp-role">Senior Data Engineer — Cloud &amp; Data Platforms</div>
+            <div class="exp-company">Sofrecom (Orange Group)</div>
+          </div>
+          <span class="exp-period">Jan 2025 → Present</span>
+        </div>
+        <ul class="exp-bullets">
+          <li>Built <strong>Databricks lakehouse pipelines</strong> with PySpark and Delta Lake, processing multi-country telecom datasets across <strong>17 countries</strong></li>
+          <li>Optimized Spark jobs and cluster configurations (partitioning, joins, execution plans) — <strong>30% improvement</strong> in processing time</li>
+          <li>Organized raw data into <strong>Bronze → Silver → Gold</strong> medallion layers supporting analytics across multiple business domains</li>
+          <li>Contributed to a federated data platform using <strong>Apache Iceberg, Starburst, and Dataiku</strong> for AI use cases</li>
+        </ul>
+        <div class="exp-stack">
+          <span class="stack-tag">Databricks</span>
+          <span class="stack-tag">PySpark</span>
+          <span class="stack-tag">Delta Lake</span>
+          <span class="stack-tag">Apache Iceberg</span>
+          <span class="stack-tag">BigQuery</span>
+          <span class="stack-tag">dbt</span>
+          <span class="stack-tag">Starburst</span>
+          <span class="stack-tag">Dataiku</span>
+          <span class="stack-tag">Kubernetes</span>
+          <span class="stack-tag">GitLab CI/CD</span>
+        </div>
+      </div>
+
+      <div class="exp-item fade-in">
+        <div class="exp-header">
+          <div>
+            <div class="exp-role">Data Engineer &amp; Data Modeler</div>
+            <div class="exp-company">Cnexia Tech (Bell Canada)</div>
+          </div>
+          <span class="exp-period">Oct 2023 → Dec 2024</span>
+        </div>
+        <ul class="exp-bullets">
+          <li>Designed and maintained <strong>enterprise data models on Teradata</strong>, structuring and optimizing schemas for analytical and reporting use cases</li>
+          <li>Implemented automated ETL pipelines using <strong>Cloud Data Fusion, Dataproc, and Dataflow</strong> integrating multiple enterprise data sources</li>
+          <li>Established <strong>data governance processes using Collibra</strong>, ensuring compliance with privacy regulations and data standards</li>
+        </ul>
+        <div class="exp-stack">
+          <span class="stack-tag">GCP</span>
+          <span class="stack-tag">BigQuery</span>
+          <span class="stack-tag">Dataflow</span>
+          <span class="stack-tag">Cloud Data Fusion</span>
+          <span class="stack-tag">Teradata</span>
+          <span class="stack-tag">Collibra</span>
+          <span class="stack-tag">SAS</span>
+        </div>
+      </div>
+
+      <div class="exp-item fade-in">
+        <div class="exp-header">
+          <div>
+            <div class="exp-role">Data Engineer</div>
+            <div class="exp-company">ALTEN Group (Bouygues Télécom France)</div>
+          </div>
+          <span class="exp-period">Feb 2023 → Sep 2023</span>
+        </div>
+        <ul class="exp-bullets">
+          <li>Built automated <strong>data quality monitoring, reconciliation, and anomaly detection</strong> workflows in Python, reducing manual interventions</li>
+          <li>Developed <strong>Databricks-based pipelines</strong> integrating cloud data sources across AWS and GCP</li>
+          <li>Optimized SQL-based transformations for performance, consistency, and maintainability</li>
+        </ul>
+        <div class="exp-stack">
+          <span class="stack-tag">Databricks</span>
+          <span class="stack-tag">AWS S3</span>
+          <span class="stack-tag">Lambda</span>
+          <span class="stack-tag">BigQuery</span>
+          <span class="stack-tag">Terraform</span>
+          <span class="stack-tag">MongoDB</span>
+          <span class="stack-tag">Looker</span>
+        </div>
+      </div>
+
+      <div class="exp-item fade-in">
+        <div class="exp-header">
+          <div>
+            <div class="exp-role">BI Developer &amp; Data Engineer</div>
+            <div class="exp-company">Confidential</div>
+          </div>
+          <span class="exp-period">Apr 2019 → Jan 2023</span>
+        </div>
+        <ul class="exp-bullets">
+          <li>Designed scalable SQL data models and automated ETL pipelines using <strong>Airflow and Azure Data Factory</strong></li>
+          <li>Built distributed data processing workflows with <strong>Spark and Hadoop</strong> for analytics and <strong>fraud detection</strong></li>
+          <li>Developed BI assets and reporting datasets supporting data-driven decision-making across client environments</li>
+        </ul>
+        <div class="exp-stack">
+          <span class="stack-tag">Airflow</span>
+          <span class="stack-tag">Azure Data Factory</span>
+          <span class="stack-tag">Spark</span>
+          <span class="stack-tag">PySpark</span>
+          <span class="stack-tag">Hadoop</span>
+          <span class="stack-tag">SQL</span>
+          <span class="stack-tag">Power BI</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CERTIFICATIONS -->
+<section id="certifications">
+  <div class="container">
+    <div class="section-header fade-in">
+      <span class="section-tag">// Certifications</span>
+      <h2 class="section-title">Certified Across<br>Every Major Cloud</h2>
+    </div>
+
+    <div class="certs-grid fade-in">
+      <div class="cert-card">
+        <div class="cert-icon aws">☁</div>
+        <div>
+          <div class="cert-name">AWS Certified Data Engineer — Associate</div>
+          <div class="cert-issuer">Amazon Web Services</div>
+        </div>
+      </div>
+      <div class="cert-card">
+        <div class="cert-icon gcp">◎</div>
+        <div>
+          <div class="cert-name">Professional Data Engineer</div>
+          <div class="cert-issuer">Google Cloud</div>
+        </div>
+      </div>
+      <div class="cert-card">
+        <div class="cert-icon gcp">◎</div>
+        <div>
+          <div class="cert-name">Professional Cloud Architect</div>
+          <div class="cert-issuer">Google Cloud</div>
+        </div>
+      </div>
+      <div class="cert-card">
+        <div class="cert-icon azure">⬡</div>
+        <div>
+          <div class="cert-name">Fabric Data Engineer Associate</div>
+          <div class="cert-issuer">Microsoft Azure</div>
+        </div>
+      </div>
+      <div class="cert-card">
+        <div class="cert-icon databricks">◈</div>
+        <div>
+          <div class="cert-name">Certified Data Engineer Professional</div>
+          <div class="cert-issuer">Databricks</div>
+        </div>
+      </div>
+      <div class="cert-card">
+        <div class="cert-icon other">✦</div>
+        <div>
+          <div class="cert-name">Advanced Designer</div>
+          <div class="cert-issuer">Dataiku</div>
+        </div>
+      </div>
+      <div class="cert-card">
+        <div class="cert-icon other">◻</div>
+        <div>
+          <div class="cert-name">Data Science Professional Certificate</div>
+          <div class="cert-issuer">IBM</div>
+        </div>
+      </div>
+      <div class="cert-card">
+        <div class="cert-icon other">◌</div>
+        <div>
+          <div class="cert-name">Machine Learning Specialization</div>
+          <div class="cert-issuer">DeepLearning.AI</div>
+        </div>
+      </div>
+      <div class="cert-card">
+        <div class="cert-icon other">◐</div>
+        <div>
+          <div class="cert-name">Agile Foundations</div>
+          <div class="cert-issuer">LinkedIn Learning</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CLOUD COVERAGE -->
+<section id="cloud">
+  <div class="container">
+    <div class="section-header fade-in">
+      <span class="section-tag">// Cloud Coverage</span>
+      <h2 class="section-title">Multi-Cloud Native</h2>
+    </div>
+
+    <div class="cloud-grid fade-in">
+      <div class="cloud-card gcp">
+        <div class="cloud-cert-badge">2× Certified</div>
+        <div class="cloud-logo gcp">Google Cloud</div>
+        <div class="cloud-services">
+          <span class="cloud-svc">BigQuery</span>
+          <span class="cloud-svc">Dataflow</span>
+          <span class="cloud-svc">Dataproc</span>
+          <span class="cloud-svc">Cloud Storage</span>
+          <span class="cloud-svc">Pub/Sub</span>
+          <span class="cloud-svc">Cloud Functions</span>
+          <span class="cloud-svc">Cloud Data Fusion</span>
+          <span class="cloud-svc">Looker</span>
+        </div>
+      </div>
+
+      <div class="cloud-card azure">
+        <div class="cloud-cert-badge">Certified</div>
+        <div class="cloud-logo azure">Microsoft Azure</div>
+        <div class="cloud-services">
+          <span class="cloud-svc">Synapse Analytics</span>
+          <span class="cloud-svc">Data Factory</span>
+          <span class="cloud-svc">Databricks</span>
+          <span class="cloud-svc">Data Lake Storage</span>
+          <span class="cloud-svc">Cosmos DB</span>
+          <span class="cloud-svc">Power BI</span>
+          <span class="cloud-svc">Azure Purview</span>
+        </div>
+      </div>
+
+      <div class="cloud-card aws">
+        <div class="cloud-cert-badge">Certified</div>
+        <div class="cloud-logo aws">Amazon AWS</div>
+        <div class="cloud-services">
+          <span class="cloud-svc">S3</span>
+          <span class="cloud-svc">Lambda</span>
+          <span class="cloud-svc">Glue</span>
+          <span class="cloud-svc">API Gateway</span>
+          <span class="cloud-svc">SageMaker</span>
+          <span class="cloud-svc">CloudWatch</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="container">
+    <div class="contact-inner fade-in">
+      <span class="section-tag" style="display:block;margin-bottom:0.8rem;">// Contact</span>
+      <h2 class="section-title">Let's Build Something<br>Extraordinary</h2>
+      <p>Open to Senior Data Engineer roles across Canada. Let's talk pipelines, lakehouses, and scale.</p>
+
+      <div class="contact-links">
+        <a href="mailto:ismail.jabri2025@gmail.com" class="contact-link">
+          ✉ ismail.jabri2025@gmail.com
+        </a>
+        <a href="tel:+14378379299" class="contact-link">
+          ☎ +1 (437) 837-9299
+        </a>
+        <a href="https://linkedin.com/in/IsmailJABRI" target="_blank" class="contact-link">
+          in LinkedIn
+        </a>
+        <a href="https://github.com/darklightismail" target="_blank" class="contact-link">
+          ⌥ GitHub
+        </a>
+      </div>
+
+      <a href="mailto:ismail.jabri2025@gmail.com" class="btn-primary">Start a Conversation</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2025 Ismail Jabri — <span>Senior Data Engineer</span></p>
+  <p>Built with precision · Canada PR · Open to opportunities</p>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

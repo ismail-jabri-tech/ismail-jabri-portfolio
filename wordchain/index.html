@@ -56,13 +56,21 @@
   /* ---- layout ---- */
 
   .game {
-    display:grid; grid-template-columns: 300px 1fr; gap:2rem;
+    display:grid;
+    grid-template-columns: 300px 1fr;
+    grid-template-rows: auto 1fr;
+    gap:1.5rem 2rem;
     margin-top:2.25rem; align-items:start;
   }
+  .side  { grid-column:1; grid-row:1; }
+  .stage { grid-column:2; grid-row:1 / span 2; }
+  .route { grid-column:1; grid-row:2; }
+
+  /* Phone: one column, and the input comes before the graph — typing is the
+     action, so it shouldn't sit below 400px of canvas. Route goes last. */
   @media (max-width: 820px) {
-    .game { grid-template-columns:1fr; gap:1.5rem; }
-    .side { order:2; }
-    .stage { order:1; }
+    .game { grid-template-columns:1fr; gap:1.25rem; }
+    .side, .stage, .route { grid-column:1; grid-row:auto; }
   }
 
   /* ---- scoreboard ---- */
@@ -92,9 +100,12 @@
       var(--bg2);
     overflow:hidden;
   }
-  #graph { display:block; width:100%; height:520px; touch-action:none; cursor:grab; }
+  /* pan-y, not none: with touch-action:none a 400px canvas becomes a scroll
+     trap on a phone. This keeps vertical page scroll working while still
+     letting a drag move a word. Mouse input is unaffected either way. */
+  #graph { display:block; width:100%; height:520px; touch-action:pan-y; cursor:grab; }
   #graph.dragging { cursor:grabbing; }
-  @media (max-width:820px) { #graph { height:400px; } }
+  @media (max-width:820px) { #graph { height:62vh; min-height:340px; max-height:440px; } }
 
   .legend {
     position:absolute; left:.9rem; bottom:.8rem;
@@ -155,6 +166,21 @@
   .hop.weakest .w, .hop.weakest .p { color:var(--weak); }
   .hop.weakest .rule { background:var(--weak); opacity:.5; }
 
+  /* Won: each hop lights in turn. The colour lives inside the keyframes so
+     that animation-delay + fill-mode:both holds every later hop dim until its
+     turn actually arrives — set it on the selector and they'd all fire at once. */
+  .route.won .hop { animation: hopLight .5s ease both; }
+  .route.won .hop .w,
+  .route.won .hop .p { color: inherit; }
+  .route.won .hop .rule { background: currentColor; opacity:.4; }
+
+  @keyframes hopLight {
+    0%   { color: var(--muted2); opacity:.3; transform: translateX(-5px); }
+    55%  { color: var(--win);    opacity:1;  transform: none; }
+    100% { color: var(--win);    opacity:1; }
+  }
+  .route.won .route-lbl { color: var(--win); opacity:.7; }
+
   /* ---- win ---- */
 
   .won {
@@ -171,6 +197,19 @@
     max-width:70ch;
   }
   .colophon code { font-family:'JetBrains Mono',monospace; font-size:.75rem; color:var(--text2); }
+
+  @media (max-width: 560px) {
+    .wrap { padding: 1.5rem 1.1rem 3rem; }
+    .tagline { font-size:.88rem; }
+    .board-meta { gap:1.25rem; padding-bottom:1rem; margin-bottom:1rem; }
+    .stat .num { font-size:1.4rem; }
+    .play { gap:.4rem; }
+    input[type="text"] { font-size:16px; padding:.7rem .8rem; }  /* 16px stops iOS zooming on focus */
+    button { padding:.7rem .85rem; font-size:.65rem; }
+    .hint { display:none; }
+    .legend { font-size:.54rem; gap:.7rem; left:.6rem; bottom:.6rem; }
+    .colophon { font-size:.78rem; }
+  }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition-duration:.01ms !important; }
@@ -211,11 +250,6 @@
         <button id="fresh" class="ghost">New</button>
       </div>
       <p class="msg" id="msg">Loading vocabulary…</p>
-
-      <div class="route" id="route" hidden>
-        <div class="route-lbl">Best route</div>
-        <div id="hops"></div>
-      </div>
     </div>
 
     <div class="stage">
@@ -226,6 +260,11 @@
         <span class="b"><i></i>to</span>
         <span class="g"><i></i>the gap</span>
       </div>
+    </div>
+
+    <div class="route" id="route" hidden>
+      <div class="route-lbl">Best route</div>
+      <div id="hops"></div>
     </div>
   </div>
 
@@ -266,6 +305,8 @@
   let vocab = [], index = new Map(), vecs = null, dim = 0, target = 0.45;
   let bias = null, LO = 0, HI = 1;
   let board = [], played = 0, solved = false;
+  let winPath = [], winAt = 0, winSlot = new Map();   // the reveal
+  const STEP = 260;                                   // ms per hop lighting up
 
   const $ = id => document.getElementById(id);
   const els = {
@@ -327,6 +368,8 @@
   let gapEdge = null;    // the bottleneck, drawn as the missing bridge
   let alpha = 1;         // simulation temperature
   let drag = null;
+  let MOB = false;       // narrow viewport -> smaller pills, vertical anchors
+  let FS = 12;           // node font size
 
   function fit() {
     const dpr = Math.min(devicePixelRatio || 1, 2);
@@ -335,19 +378,23 @@
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.font = '500 12px "JetBrains Mono", monospace';
+    MOB = W < 560;
+    FS = MOB ? 10 : 12;
+    ctx.font = `500 ${FS}px "JetBrains Mono", monospace`;
+    // Pills were sized against the old font — restate them or they'll collide.
+    for (const nd of nodes) { nd.w = measure(nd.word); nd.h = MOB ? 21 : 26; }
   }
 
   function measure(word) {
-    ctx.font = '500 12px "JetBrains Mono", monospace';
-    return Math.max(46, ctx.measureText(word).width + 22);
+    ctx.font = `500 ${FS}px "JetBrains Mono", monospace`;
+    return Math.max(MOB ? 34 : 46, ctx.measureText(word).width + (MOB ? 14 : 22));
   }
 
   function addNode(boardIdx, x, y) {
     const word = vocab[board[boardIdx]];
     nodes[boardIdx] = {
       x, y, vx: 0, vy: 0,
-      w: measure(word), h: 26,
+      w: measure(word), h: MOB ? 21 : 26,
       born: performance.now(), word,
     };
   }
@@ -405,9 +452,9 @@
         let d2 = dx * dx + dy * dy;
         if (d2 < 1) { dx = Math.random() - .5; dy = Math.random() - .5; d2 = 1; }
         const d = Math.sqrt(d2);
-        const min = (a.w + b.w) / 2 + 18;
+        const min = (a.w + b.w) / 2 + (MOB ? 10 : 18);
         // Hard shove when pills would overlap, soft charge otherwise.
-        const f = d < min ? (min - d) * 0.5 : 2400 / d2;
+        const f = d < min ? (min - d) * 0.5 : (MOB ? 1000 : 2400) / d2;
         const ux = dx / d * f, uy = dy / d * f;
         a.vx -= ux; a.vy -= uy; b.vx += ux; b.vy += uy;
       }
@@ -418,18 +465,21 @@
       const dx = b.x - a.x, dy = b.y - a.y;
       const d = Math.hypot(dx, dy) || 1;
       // Map similarity onto rest length: tight for strong links.
-      const rest = 190 - 150 * Math.min(1, Math.max(0, (e.s - target) / (0.95 - target)));
+      const span = MOB ? [118, 88] : [190, 150];
+      const rest = span[0] - span[1] * Math.min(1, Math.max(0, (e.s - target) / (0.95 - target)));
       const f = (d - rest) * 0.035;
       const ux = dx / d * f, uy = dy / d * f;
       a.vx += ux; a.vy += uy; b.vx -= ux; b.vy -= uy;
     }
 
-    // Anchors bias to opposite sides so the gap reads left-to-right.
+    // Anchors bias to opposite ends so the gap reads as a span. A phone canvas
+    // is taller than it is wide, so the axis flips: top-to-bottom, not left-to-right.
     nodes.forEach((nd, i) => {
-      const tx = i === 0 ? W * 0.22 : i === 1 ? W * 0.78 : W / 2;
       const pull = i < 2 ? 0.014 : 0.004;
+      const tx = MOB ? W / 2 : (i === 0 ? W * 0.22 : i === 1 ? W * 0.78 : W / 2);
+      const ty = MOB ? (i === 0 ? H * 0.14 : i === 1 ? H * 0.86 : H / 2) : H / 2;
       nd.vx += (tx - nd.x) * pull;
-      nd.vy += (H / 2 - nd.y) * 0.006;
+      nd.vy += (ty - nd.y) * (MOB && i < 2 ? 0.014 : 0.006);
     });
 
     for (const nd of nodes) {
@@ -471,14 +521,19 @@
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
     }
 
-    // The gap: the only red on the page, and the only dashed line.
+    // The gap: the only red on the page, and the only dashed line — while you're
+    // still losing. Red is an alarm; once the route is closed there's nothing to
+    // alarm about, so the weakest link turns into the winning measurement.
     if (gapEdge) {
       const a = nodes[gapEdge.a], b = nodes[gapEdge.b];
-      const puls = REDUCED ? 0.6 : 0.45 + 0.35 * Math.sin(now / 420);
+      const rgb = solved ? "0,255,204" : "255,54,33";
+      const puls = solved ? 0.75 : (REDUCED ? 0.6 : 0.45 + 0.35 * Math.sin(now / 420));
       ctx.save();
-      ctx.setLineDash([5, 5]);
-      ctx.lineDashOffset = REDUCED ? 0 : -now / 45;
-      ctx.strokeStyle = `rgba(255,54,33,${puls})`;
+      if (!solved) {
+        ctx.setLineDash([5, 5]);
+        ctx.lineDashOffset = REDUCED ? 0 : -now / 45;
+      }
+      ctx.strokeStyle = `rgba(${rgb},${puls})`;
       ctx.lineWidth = 1.6;
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
       ctx.restore();
@@ -489,16 +544,46 @@
       const lw = ctx.measureText(label).width + 12;
       ctx.fillStyle = "#05060a";
       pill(mx, my, lw, 16, 8); ctx.fill();
-      ctx.strokeStyle = "rgba(255,54,33,.5)"; ctx.lineWidth = 1; ctx.stroke();
-      ctx.fillStyle = "#FF3621";
+      ctx.strokeStyle = `rgba(${rgb},.5)`; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = solved ? "#00ffcc" : "#FF3621";
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.fillText(label, mx, my + .5);
     }
 
+    // The win reveal: the route runs itself, hop by hop, end to end. Drawn over
+    // the links but under the words so the labels stay readable.
+    if (solved && winPath.length > 1) {
+      const t = now - winAt;
+      ctx.save();
+      ctx.lineCap = "round";
+      for (let i = 0; i < winPath.length - 1; i++) {
+        const st = i * STEP;
+        if (t < st) break;
+        const a = nodes[winPath[i]], b = nodes[winPath[i + 1]];
+        const k = REDUCED ? 1 : Math.min(1, (t - st) / STEP);
+        const e = k < 1 ? 1 - Math.pow(1 - k, 3) : 1;   // ease out, so it lands
+        ctx.strokeStyle = "rgba(0,255,204,.85)";
+        ctx.shadowColor = "rgba(0,255,204,.55)";
+        ctx.shadowBlur = 12;
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(a.x + (b.x - a.x) * e, a.y + (b.y - a.y) * e);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    const t = solved ? now - winAt : -1;
     for (let i = 0; i < nodes.length; i++) {
       const nd = nodes[i];
-      const c = COL[nd.side] || COL[0];
+      const slot = winSlot.has(i) ? winSlot.get(i) : -1;
+      const lit = slot >= 0 && t >= slot * STEP;
+      const c = lit ? [0, 255, 204] : (COL[nd.side] || COL[0]);
       const anchor = i < 2;
+      // A brief swell the moment the route arrives at this word.
+      const since = lit && !REDUCED ? (t - slot * STEP) / 260 : 9;
+      const bump = since < 1 ? 1 + 0.13 * Math.sin(since * Math.PI) : 1;
 
       // New words pop in rather than teleporting.
       const age = (now - nd.born) / 320;
@@ -507,19 +592,19 @@
 
       ctx.save();
       ctx.globalAlpha = o;
-      ctx.translate(nd.x, nd.y); ctx.scale(s, s); ctx.translate(-nd.x, -nd.y);
+      ctx.translate(nd.x, nd.y); ctx.scale(s * bump, s * bump); ctx.translate(-nd.x, -nd.y);
 
-      if (anchor) { ctx.shadowColor = rgba(c, .5); ctx.shadowBlur = 16; }
-      ctx.fillStyle = anchor ? rgba(c, 0.14) : "#0c0e14";
-      pill(nd.x, nd.y, nd.w, nd.h, 13); ctx.fill();
+      if (anchor || lit) { ctx.shadowColor = rgba(c, .5); ctx.shadowBlur = lit ? 20 : 16; }
+      ctx.fillStyle = (anchor || lit) ? rgba(c, 0.14) : "#0c0e14";
+      pill(nd.x, nd.y, nd.w, nd.h, MOB ? 10 : 13); ctx.fill();
       ctx.shadowBlur = 0;
 
-      ctx.strokeStyle = rgba(c, anchor ? 0.85 : nd.side ? 0.4 : 0.22);
-      ctx.lineWidth = anchor ? 1.6 : 1;
+      ctx.strokeStyle = rgba(c, (anchor || lit) ? 0.85 : nd.side ? 0.4 : 0.22);
+      ctx.lineWidth = (anchor || lit) ? 1.6 : 1;
       ctx.stroke();
 
-      ctx.font = `${anchor ? 600 : 400} 12px "JetBrains Mono", monospace`;
-      ctx.fillStyle = anchor ? rgba(c, 1) : nd.side ? "#e8eaf0" : "#6a7490";
+      ctx.font = `${anchor || lit ? 600 : 400} ${FS}px "JetBrains Mono", monospace`;
+      ctx.fillStyle = (anchor || lit) ? rgba(c, 1) : nd.side ? "#e8eaf0" : "#6a7490";
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.fillText(nd.word, nd.x, nd.y + .5);
       ctx.restore();
@@ -583,6 +668,8 @@
     const rand = mulberry32((Math.random() * 1e9) | 0);
     board = pickAnchors(rand);
     played = 0; solved = false;
+    winPath = []; winAt = 0; winSlot = new Map();
+    els.route.classList.remove("won");
     nodes = [];
     addNode(0, W * 0.22, H / 2);
     addNode(1, W * 0.78, H / 2);
@@ -600,6 +687,22 @@
 
   function render() {
     const { width, path } = widestPath(0, 1);
+
+    // Resolve the win before drawing, not after: the route list needs to know
+    // it's the winning one at the moment it's built, or the reveal misses it.
+    if (width >= target && !solved) {
+      solved = true;
+      winPath = path.slice();
+      winAt = performance.now();
+      winSlot = new Map(path.map((node, i) => [node, i]));
+      els.won.hidden = false;
+      els.wonText.textContent =
+        `${vocab[board[0]]} to ${vocab[board[1]]} at ${pct(width)} — ` +
+        `${played} word${played === 1 ? "" : "s"} played, ${path.length - 2} on the route.`;
+      els.entry.disabled = true; els.add.disabled = true;
+      say("");
+    }
+
     retopo(width, path);
 
     els.gap.textContent = pct(width);
@@ -607,27 +710,20 @@
     els.played.textContent = played;
 
     els.route.hidden = path.length < 2;
+    els.route.classList.toggle("won", solved);
     els.hops.innerHTML = "";
     for (let i = 0; i < path.length - 1; i++) {
       const s = sim(board[path[i]], board[path[i + 1]]);
       const row = document.createElement("div");
-      row.className = "hop" + (Math.abs(s - width) < 1e-9 ? " weakest" : "");
+      row.className = "hop" + (!solved && Math.abs(s - width) < 1e-9 ? " weakest" : "");
+      // Same clock as the canvas, so the list and the graph light in lockstep.
+      if (solved) row.style.animationDelay = `${(i * STEP) / 1000}s`;
       row.innerHTML =
         `<span class="w">${vocab[board[path[i]]]}</span>` +
         `<span class="rule"></span>` +
         `<span class="w">${vocab[board[path[i + 1]]]}</span>` +
         `<span class="p">${pct(s)}</span>`;
       els.hops.appendChild(row);
-    }
-
-    if (width >= target && !solved) {
-      solved = true;
-      els.won.hidden = false;
-      els.wonText.textContent =
-        `${vocab[board[0]]} to ${vocab[board[1]]} at ${pct(width)} — ` +
-        `${played} word${played === 1 ? "" : "s"} played, ${path.length - 2} on the route.`;
-      els.entry.disabled = true; els.add.disabled = true;
-      say("");
     }
   }
 

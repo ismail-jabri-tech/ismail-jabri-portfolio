@@ -61,17 +61,6 @@
       position: relative;
     }
 
-    .btn-game {
-  border-color: rgba(0,212,255,.22);
-  background: var(--ring2);
-  color: var(--ice);
-}
-.btn-game:hover {
-  border-color: var(--ice);
-  box-shadow: 0 0 20px var(--ring2);
-}
-    
-
     #bg-canvas {
       position: fixed;
       inset: 0;
@@ -170,6 +159,11 @@
     }
 
     .nav-links a:hover { color: var(--ice); }
+
+    /* The game lives on its own page, so its nav item is marked rather than
+       sitting silently among the in-page anchors. */
+    .nav-links a.ext { color: var(--ice); opacity: .75; }
+    .nav-links a.ext:hover { opacity: 1; }
 
     .theme-toggle {
       width:44px;
@@ -373,6 +367,22 @@
     }
 
     .btn-o:hover { border-color:var(--ice); color:var(--ice); transform:translateY(-2px); }
+
+    /* MUST stay after .btn-o and .btn-o:hover. Same specificity (one class),
+       so source order is the only tiebreaker — placed earlier, .btn-o would
+       silently overwrite every one of these declarations. */
+    .btn-game {
+      border-color:rgba(0,212,255,.22);
+      background:var(--ring2);
+      color:var(--ice);
+    }
+
+    .btn-game:hover {
+      border-color:var(--ice);
+      color:var(--ice);
+      box-shadow:0 0 20px var(--ring2);
+      transform:translateY(-2px);
+    }
 
     .hero-stats { display:flex; gap:2.2rem; flex-wrap:wrap; animation:fadeUp .6s .72s both; }
     .hero-stat .num {
@@ -727,6 +737,22 @@
     .pj-desc { font-size:.85rem; color:var(--muted); line-height:1.65; margin-bottom:1rem; transition:color var(--tr); }
     .pj-tags { display:flex; flex-wrap:wrap; gap:.3rem; }
 
+    /* The only card that leads somewhere, so it gets the only live link. */
+    .pj-play {
+      display:inline-block;
+      font-family:'JetBrains Mono', monospace;
+      font-size:.63rem;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--ice);
+      text-decoration:none;
+      margin-bottom:1rem;
+      border-bottom:1px solid rgba(0,212,255,.3);
+      padding-bottom:2px;
+      transition:border-color .2s;
+    }
+    .pj-play:hover { border-bottom-color:var(--ice); }
+
     .pt {
       font-family:'JetBrains Mono', monospace;
       font-size:.62rem;
@@ -824,9 +850,9 @@
       <li><a href="#about">about</a></li>
       <li><a href="#experience">experience</a></li>
       <li><a href="#projects">projects</a></li>
-      <li><a href="wordchain/">game</a></li>
       <li><a href="#credentials">credentials</a></li>
       <li><a href="#contact">contact</a></li>
+      <li><a href="wordchain/" class="ext">game ↗</a></li>
     </ul>
     <div class="theme-toggle" id="themeToggle" role="button" tabindex="0" aria-label="Toggle light and dark theme">
       <span class="ti m">🌙</span>
@@ -1005,6 +1031,7 @@
       <div class="pj fi"><div class="pj-hdr"><div class="pj-icon">🧩</div></div><h3 class="pj-title">Enterprise Data Modeling &amp; GCP Integration</h3><p class="pj-desc">Governed enterprise data models and cloud integration workflows for analytical and reporting use cases, with documented data assets and governance controls.</p><div class="pj-tags"><span class="pt">BigQuery</span><span class="pt">Dataflow</span><span class="pt">Teradata</span><span class="pt">Collibra</span></div></div>
       <div class="pj fi"><div class="pj-hdr"><div class="pj-icon">✅</div></div><h3 class="pj-title">Cloud Pipelines &amp; Data Quality Automation</h3><p class="pj-desc">Databricks and Spark pipelines across AWS and GCP with automated validation, reconciliation, monitoring, and anomaly detection for reliable telecom analytics.</p><div class="pj-tags"><span class="pt">Databricks</span><span class="pt">PySpark</span><span class="pt">AWS</span><span class="pt">GCP</span></div></div>
       <div class="pj fi"><div class="pj-hdr"><div class="pj-icon">📊</div></div><h3 class="pj-title">BI &amp; Reporting Automation</h3><p class="pj-desc">Automated data preparation and reporting workflows, modeled analytical datasets, and dynamic KPI dashboards supporting business decision-making.</p><div class="pj-tags"><span class="pt">SQL</span><span class="pt">Python</span><span class="pt">Airflow</span><span class="pt">Azure Data Factory</span></div></div>
+      <div class="pj fi"><div class="pj-hdr"><div class="pj-icon">◈</div></div><h3 class="pj-title">Widest Path — Word Chain Game</h3><p class="pj-desc">A browser word game scored by the bottleneck edge of a semantic graph. An offline pipeline mean-centers GloVe vectors, applies CSLS hubness correction, and quantizes to a 1.2 MB int8 blob; the client solves a max-min Dijkstra every turn and lays the board out with a hand-rolled force simulation. Fully static, zero dependencies.</p><a href="wordchain/" class="pj-play">Play it →</a><div class="pj-tags"><span class="pt">Python</span><span class="pt">NumPy</span><span class="pt">Embeddings</span><span class="pt">Quantization</span><span class="pt">Graph Algorithms</span></div></div>
     </div>
   </div>
 </section>

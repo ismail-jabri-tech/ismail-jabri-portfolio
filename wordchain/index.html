@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Widest Path — a word chain game by Ismail Jabri</title>
+<meta name="description" content="Bridge two unrelated words by building a chain of meaning. Your score is your weakest link." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:#05060a; --bg2:#0c0e14; --bg3:#11141c;
+    --border:rgba(255,255,255,0.065); --border2:rgba(255,255,255,0.13);
+    --ice:#00d4ff;                 /* the component you start from   */
+    --far:#a855f7;                 /* the component you're reaching  */
+    --text:#e8eaf0; --text2:#a0a8c0;
+    --muted:#6a7490; --muted2:#35405a;
+    --ring2:rgba(0,212,255,0.07);
+    --weak:#FF3621;                /* the bottleneck. the only red on the page */
+    --win:#00ffcc;
+    --grid:rgba(0,212,255,0.022);
+  }
+
+  body {
+    background: var(--bg); color: var(--text);
+    font-family:'DM Sans', sans-serif; line-height:1.6; min-height:100vh;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 55px 55px;
+  }
+  a { color: var(--ice); }
+
+  .wrap { max-width: 1080px; margin:0 auto; padding: 2.5rem 1.75rem 5rem; }
+
+  .back {
+    font-family:'JetBrains Mono', monospace; font-size:.7rem; color:var(--muted);
+    text-decoration:none; letter-spacing:.09em; text-transform:uppercase;
+    transition:color .2s;
+  }
+  .back:hover { color: var(--ice); }
+
+  .eyebrow {
+    font-family:'JetBrains Mono', monospace; font-size:.7rem; color:var(--ice);
+    letter-spacing:.15em; text-transform:uppercase; display:block; margin:2.5rem 0 .7rem;
+  }
+  h1 {
+    font-family:'Syne', sans-serif; font-size:clamp(2rem,5.5vw,3rem);
+    font-weight:800; line-height:1; letter-spacing:-.025em;
+  }
+  .tagline { color:var(--muted); font-size:.95rem; font-weight:300; max-width:52ch; margin-top:.9rem; }
+  .tagline strong { color:var(--text); font-weight:500; }
+
+  /* ---- layout ---- */
+
+  .game {
+    display:grid; grid-template-columns: 300px 1fr; gap:2rem;
+    margin-top:2.25rem; align-items:start;
+  }
+  @media (max-width: 820px) {
+    .game { grid-template-columns:1fr; gap:1.5rem; }
+    .side { order:2; }
+    .stage { order:1; }
+  }
+
+  /* ---- scoreboard ---- */
+
+  .board-meta {
+    display:flex; gap:1.75rem; flex-wrap:wrap;
+    padding-bottom:1.4rem; margin-bottom:1.4rem;
+    border-bottom:1px solid var(--border);
+  }
+  .stat .num {
+    font-family:'Syne',sans-serif; font-size:1.7rem; font-weight:700;
+    line-height:1; font-variant-numeric:tabular-nums;
+  }
+  .stat .lbl {
+    font-family:'JetBrains Mono',monospace; font-size:.6rem; color:var(--muted);
+    letter-spacing:.08em; text-transform:uppercase; margin-top:.3rem;
+  }
+  #gapValue { color: var(--weak); }
+  #gapValue.met { color: var(--win); }
+
+  /* ---- the graph: signature element ---- */
+
+  .stage {
+    position:relative; border:1px solid var(--border); border-radius:.6rem;
+    background:
+      radial-gradient(circle at 50% 45%, rgba(0,212,255,.035), transparent 65%),
+      var(--bg2);
+    overflow:hidden;
+  }
+  #graph { display:block; width:100%; height:520px; touch-action:none; cursor:grab; }
+  #graph.dragging { cursor:grabbing; }
+  @media (max-width:820px) { #graph { height:400px; } }
+
+  .legend {
+    position:absolute; left:.9rem; bottom:.8rem;
+    display:flex; gap:1rem; flex-wrap:wrap;
+    font-family:'JetBrains Mono',monospace; font-size:.58rem;
+    color:var(--muted2); letter-spacing:.05em; pointer-events:none;
+  }
+  .legend i { display:inline-block; width:14px; height:2px; margin-right:.35rem; vertical-align:middle; border-radius:2px; }
+  .legend .a i { background:var(--ice); }
+  .legend .b i { background:var(--far); }
+  .legend .g i { background:var(--weak); }
+
+  .hint {
+    position:absolute; right:.9rem; top:.8rem;
+    font-family:'JetBrains Mono',monospace; font-size:.58rem;
+    color:var(--muted2); letter-spacing:.05em; pointer-events:none;
+  }
+
+  /* ---- input ---- */
+
+  .play { display:flex; gap:.5rem; margin-bottom:.6rem; }
+  input[type="text"] {
+    flex:1; min-width:0; font-family:'JetBrains Mono',monospace; font-size:.85rem;
+    padding:.75rem .9rem; border-radius:.35rem; background:var(--bg2);
+    border:1px solid var(--border2); color:var(--text); outline:none;
+    transition:border-color .2s;
+  }
+  input[type="text"]:focus { border-color:var(--ice); }
+  input[type="text"]::placeholder { color:var(--muted2); }
+
+  button {
+    font-family:'JetBrains Mono',monospace; font-size:.7rem; letter-spacing:.08em;
+    text-transform:uppercase; font-weight:600; padding:.75rem 1.1rem;
+    border-radius:.35rem; border:none; background:var(--ice); color:#000;
+    cursor:pointer; transition:filter .2s, transform .2s;
+  }
+  button:hover:not(:disabled) { filter:brightness(1.15); transform:translateY(-2px); }
+  button:disabled { opacity:.35; cursor:not-allowed; }
+  button.ghost { background:transparent; color:var(--text); border:1px solid var(--border2); font-weight:400; }
+  button.ghost:hover { border-color:var(--ice); color:var(--ice); }
+  :focus-visible { outline:2px solid var(--ice); outline-offset:2px; }
+
+  .msg { font-family:'JetBrains Mono',monospace; font-size:.7rem; min-height:2.6rem; color:var(--muted); }
+  .msg.bad { color:var(--weak); }
+  .msg.good { color:var(--win); }
+
+  /* ---- path readout ---- */
+
+  .route { margin-top:1.4rem; }
+  .route-lbl {
+    font-family:'JetBrains Mono',monospace; font-size:.58rem; color:var(--muted2);
+    letter-spacing:.12em; text-transform:uppercase; margin-bottom:.6rem;
+  }
+  .hop { display:flex; align-items:center; gap:.5rem; font-family:'JetBrains Mono',monospace; font-size:.7rem; padding:.2rem 0; }
+  .hop .w { color:var(--text2); }
+  .hop .rule { flex:1; height:1px; background:var(--border2); }
+  .hop .p { color:var(--muted); font-variant-numeric:tabular-nums; }
+  .hop.weakest .w, .hop.weakest .p { color:var(--weak); }
+  .hop.weakest .rule { background:var(--weak); opacity:.5; }
+
+  /* ---- win ---- */
+
+  .won {
+    border:1px solid rgba(0,255,204,.25); background:rgba(0,255,204,.04);
+    border-radius:.5rem; padding:1rem 1.1rem; margin-bottom:1.2rem;
+  }
+  .won h2 { font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; color:var(--win); margin-bottom:.3rem; }
+  .won p { font-size:.8rem; color:var(--text2); line-height:1.5; }
+  [hidden] { display:none !important; }
+
+  .colophon {
+    margin-top:3.5rem; padding-top:1.75rem; border-top:1px solid var(--border);
+    font-size:.8rem; color:var(--muted); font-weight:300; line-height:1.8;
+    max-width:70ch;
+  }
+  .colophon code { font-family:'JetBrains Mono',monospace; font-size:.75rem; color:var(--text2); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration:.01ms !important; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <a href="/ismail-jabri-portfolio/" class="back">&larr; back to portfolio</a>
+
+  <span class="eyebrow">// Word game</span>
+  <h1>Widest Path</h1>
+  <p class="tagline">
+    Two words that have nothing to do with each other. Add words until meaning flows
+    between them. Links only appear once they're stronger than your
+    <strong>weakest link</strong> — so the gap is the hole in the graph. Close it.
+  </p>
+
+  <div class="game">
+    <div class="side">
+      <div class="board-meta">
+        <div class="stat"><div class="num" id="gapValue">—</div><div class="lbl">The gap</div></div>
+        <div class="stat"><div class="num" id="targetValue">—</div><div class="lbl">To win</div></div>
+        <div class="stat"><div class="num" id="playedValue">0</div><div class="lbl">Played</div></div>
+      </div>
+
+      <div class="won" id="won" hidden>
+        <h2>Connected.</h2>
+        <p id="wonText"></p>
+      </div>
+
+      <div class="play">
+        <input type="text" id="entry" placeholder="add a word" autocomplete="off"
+               autocapitalize="off" spellcheck="false" disabled
+               aria-label="Add a word to the board" />
+        <button id="add" disabled>Add</button>
+        <button id="fresh" class="ghost">New</button>
+      </div>
+      <p class="msg" id="msg">Loading vocabulary…</p>
+
+      <div class="route" id="route" hidden>
+        <div class="route-lbl">Best route</div>
+        <div id="hops"></div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <canvas id="graph"></canvas>
+      <div class="hint">drag to rearrange</div>
+      <div class="legend">
+        <span class="a"><i></i>from</span>
+        <span class="b"><i></i>to</span>
+        <span class="g"><i></i>the gap</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="colophon">
+    <p>
+      Every word is a point in 100-dimensional space, and two words are linked by the
+      cosine of the angle between them. The board is a complete weighted graph — but a
+      link is only <em>drawn</em> when it's stronger than your current weakest link,
+      which is why the two halves stay apart until you've genuinely bridged them.
+    </p>
+    <p style="margin-top:.9rem;">
+      Finding your best route is the <em>widest path problem</em>: Dijkstra's, but
+      maximizing the minimum edge instead of summing them. That bottleneck is your score.
+      Layout is a hand-rolled force simulation — springs on the links, repulsion
+      everywhere else.
+    </p>
+    <p style="margin-top:.9rem;">
+      Vectors are GloVe, mean-centered and quantized to int8 by
+      <code>build_embeddings.py</code>. No server, no libraries — 1.2&nbsp;MB of int8
+      and a <code>&lt;canvas&gt;</code>.
+    </p>
+    <p style="margin-top:.9rem;">
+      Inspired by <a href="https://linxicon.com" target="_blank" rel="noopener noreferrer">Linxicon</a>
+      by Trainwreck Labs. Go play the original — it's better.
+    </p>
+  </div>
+
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const DATA = "data/";
+  const MAX_WORDS = 26;
+  const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  let vocab = [], index = new Map(), vecs = null, dim = 0, target = 0.45;
+  let bias = null, LO = 0, HI = 1;
+  let board = [], played = 0, solved = false;
+
+  const $ = id => document.getElementById(id);
+  const els = {
+    entry: $("entry"), add: $("add"), fresh: $("fresh"), msg: $("msg"),
+    gap: $("gapValue"), target: $("targetValue"), played: $("playedValue"),
+    won: $("won"), wonText: $("wonText"), route: $("route"), hops: $("hops"),
+  };
+
+  /* ---------- similarity ---------- */
+
+  // Rows are unit-length, so cosine is just the dot product.
+  const dot = (a, b) => {
+    let acc = 0; const oa = a * dim, ob = b * dim;
+    for (let k = 0; k < dim; k++) acc += vecs[oa + k] * vecs[ob + k];
+    return acc;
+  };
+
+  // CSLS, then rescaled onto the 0-100% the player reads. bias[] is each word's
+  // hubness — how close it sits to everything — so common filler words pay for
+  // their own popularity and can't be used to bridge anything to anything.
+  // Both bias[] and the LO/HI landmarks are precomputed offline.
+  const sim = (a, b) => (2 * dot(a, b) - bias[a] - bias[b] - LO) / (HI - LO);
+  const pct = v => (v * 100).toFixed(1) + "%";
+
+  /* ---------- widest path ---------- */
+
+  // Dijkstra with min-plus swapped for max-min. The board never exceeds ~26
+  // nodes, so the O(n^2) scan is free and a heap would be theater.
+  function widestPath(src, dst) {
+    const n = board.length;
+    const best = new Array(n).fill(-Infinity);
+    const prev = new Array(n).fill(-1);
+    const seen = new Array(n).fill(false);
+    best[src] = Infinity;
+
+    for (;;) {
+      let u = -1, top = -Infinity;
+      for (let i = 0; i < n; i++) if (!seen[i] && best[i] > top) { top = best[i]; u = i; }
+      if (u === -1 || u === dst) break;
+      seen[u] = true;
+      for (let v = 0; v < n; v++) {
+        if (seen[v]) continue;
+        const width = Math.min(best[u], sim(board[u], board[v]));
+        if (width > best[v]) { best[v] = width; prev[v] = u; }
+      }
+    }
+    const path = [];
+    for (let at = dst; at !== -1; at = prev[at]) path.push(at);
+    return { width: best[dst], path: path.reverse() };
+  }
+
+  /* ---------- graph state ---------- */
+
+  const canvas = $("graph");
+  const ctx = canvas.getContext("2d");
+  let W = 0, H = 0;
+  let nodes = [];        // parallel to board
+  let edges = [];        // { a, b, s, side }  drawn links only
+  let gapEdge = null;    // the bottleneck, drawn as the missing bridge
+  let alpha = 1;         // simulation temperature
+  let drag = null;
+
+  function fit() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const r = canvas.getBoundingClientRect();
+    W = r.width; H = r.height;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.font = '500 12px "JetBrains Mono", monospace';
+  }
+
+  function measure(word) {
+    ctx.font = '500 12px "JetBrains Mono", monospace';
+    return Math.max(46, ctx.measureText(word).width + 22);
+  }
+
+  function addNode(boardIdx, x, y) {
+    const word = vocab[board[boardIdx]];
+    nodes[boardIdx] = {
+      x, y, vx: 0, vy: 0,
+      w: measure(word), h: 26,
+      born: performance.now(), word,
+    };
+  }
+
+  /* ---------- topology ---------- */
+
+  // Mirror the rule the player sees: a link is drawn only when it beats the
+  // current bottleneck. That keeps the two anchor components provably disjoint
+  // (any path between them must cross an edge <= the bottleneck), so the gap
+  // always reads as the one missing bridge.
+  function retopo(width, path) {
+    const n = board.length;
+    edges = [];
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        const s = sim(board[i], board[j]);
+        if (s > width + 1e-9) edges.push({ a: i, b: j, s, side: 0 });
+      }
+    }
+
+    // Flood from each anchor to colour the two halves.
+    const adj = Array.from({ length: n }, () => []);
+    edges.forEach(e => { adj[e.a].push(e.b); adj[e.b].push(e.a); });
+
+    const reach = start => {
+      const seen = new Set([start]), q = [start];
+      while (q.length) for (const v of adj[q.pop()]) if (!seen.has(v)) { seen.add(v); q.push(v); }
+      return seen;
+    };
+    const A = reach(0), B = reach(1);
+    nodes.forEach((nd, i) => { nd.side = A.has(i) ? 1 : B.has(i) ? 2 : 0; });
+    edges.forEach(e => { e.side = A.has(e.a) ? 1 : B.has(e.a) ? 2 : 0; });
+
+    // The bottleneck is the weakest hop on the best route.
+    gapEdge = null;
+    for (let i = 0; i < path.length - 1; i++) {
+      const s = sim(board[path[i]], board[path[i + 1]]);
+      if (Math.abs(s - width) < 1e-9) { gapEdge = { a: path[i], b: path[i + 1], s }; break; }
+    }
+  }
+
+  /* ---------- force simulation ---------- */
+
+  // Springs pull linked words together (stronger link = shorter rest length),
+  // charge pushes everything apart, and a weak centring force keeps the whole
+  // thing on screen. Cheap, ~26 nodes, runs at 60fps without breaking a sweat.
+  function tick() {
+    const n = nodes.length;
+    if (!n) return;
+
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        const a = nodes[i], b = nodes[j];
+        let dx = b.x - a.x, dy = b.y - a.y;
+        let d2 = dx * dx + dy * dy;
+        if (d2 < 1) { dx = Math.random() - .5; dy = Math.random() - .5; d2 = 1; }
+        const d = Math.sqrt(d2);
+        const min = (a.w + b.w) / 2 + 18;
+        // Hard shove when pills would overlap, soft charge otherwise.
+        const f = d < min ? (min - d) * 0.5 : 2400 / d2;
+        const ux = dx / d * f, uy = dy / d * f;
+        a.vx -= ux; a.vy -= uy; b.vx += ux; b.vy += uy;
+      }
+    }
+
+    for (const e of edges) {
+      const a = nodes[e.a], b = nodes[e.b];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.hypot(dx, dy) || 1;
+      // Map similarity onto rest length: tight for strong links.
+      const rest = 190 - 150 * Math.min(1, Math.max(0, (e.s - target) / (0.95 - target)));
+      const f = (d - rest) * 0.035;
+      const ux = dx / d * f, uy = dy / d * f;
+      a.vx += ux; a.vy += uy; b.vx -= ux; b.vy -= uy;
+    }
+
+    // Anchors bias to opposite sides so the gap reads left-to-right.
+    nodes.forEach((nd, i) => {
+      const tx = i === 0 ? W * 0.22 : i === 1 ? W * 0.78 : W / 2;
+      const pull = i < 2 ? 0.014 : 0.004;
+      nd.vx += (tx - nd.x) * pull;
+      nd.vy += (H / 2 - nd.y) * 0.006;
+    });
+
+    for (const nd of nodes) {
+      if (drag && drag.node === nd) continue;
+      nd.vx *= 0.82; nd.vy *= 0.82;
+      nd.x += nd.vx * alpha; nd.y += nd.vy * alpha;
+      const px = nd.w / 2 + 6, py = nd.h / 2 + 6;
+      nd.x = Math.max(px, Math.min(W - px, nd.x));
+      nd.y = Math.max(py, Math.min(H - py, nd.y));
+    }
+    alpha += (0.15 - alpha) * 0.02;
+  }
+
+  /* ---------- drawing ---------- */
+
+  const COL = { 1: [0, 212, 255], 2: [168, 85, 247], 0: [90, 100, 125] };
+  const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+
+  function pill(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2 + r, y - h / 2);
+    ctx.arcTo(x + w / 2, y - h / 2, x + w / 2, y + h / 2, r);
+    ctx.arcTo(x + w / 2, y + h / 2, x - w / 2, y + h / 2, r);
+    ctx.arcTo(x - w / 2, y + h / 2, x - w / 2, y - h / 2, r);
+    ctx.arcTo(x - w / 2, y - h / 2, x + w / 2, y - h / 2, r);
+    ctx.closePath();
+  }
+
+  function draw(now) {
+    ctx.clearRect(0, 0, W, H);
+
+    for (const e of edges) {
+      const a = nodes[e.a], b = nodes[e.b];
+      const c = COL[e.side] || COL[0];
+      // Stronger links read heavier — the graph shows its own weighting.
+      const t = Math.min(1, Math.max(0, (e.s - target) / 0.35));
+      ctx.strokeStyle = rgba(c, 0.14 + 0.4 * t);
+      ctx.lineWidth = 0.6 + 1.6 * t;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+
+    // The gap: the only red on the page, and the only dashed line.
+    if (gapEdge) {
+      const a = nodes[gapEdge.a], b = nodes[gapEdge.b];
+      const puls = REDUCED ? 0.6 : 0.45 + 0.35 * Math.sin(now / 420);
+      ctx.save();
+      ctx.setLineDash([5, 5]);
+      ctx.lineDashOffset = REDUCED ? 0 : -now / 45;
+      ctx.strokeStyle = `rgba(255,54,33,${puls})`;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      ctx.restore();
+
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      ctx.font = '500 10px "JetBrains Mono", monospace';
+      const label = pct(gapEdge.s);
+      const lw = ctx.measureText(label).width + 12;
+      ctx.fillStyle = "#05060a";
+      pill(mx, my, lw, 16, 8); ctx.fill();
+      ctx.strokeStyle = "rgba(255,54,33,.5)"; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = "#FF3621";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(label, mx, my + .5);
+    }
+
+    for (let i = 0; i < nodes.length; i++) {
+      const nd = nodes[i];
+      const c = COL[nd.side] || COL[0];
+      const anchor = i < 2;
+
+      // New words pop in rather than teleporting.
+      const age = (now - nd.born) / 320;
+      const s = REDUCED ? 1 : age < 1 ? 1 - Math.pow(1 - age, 3) * 0.55 : 1;
+      const o = REDUCED ? 1 : Math.min(1, age * 2.2);
+
+      ctx.save();
+      ctx.globalAlpha = o;
+      ctx.translate(nd.x, nd.y); ctx.scale(s, s); ctx.translate(-nd.x, -nd.y);
+
+      if (anchor) { ctx.shadowColor = rgba(c, .5); ctx.shadowBlur = 16; }
+      ctx.fillStyle = anchor ? rgba(c, 0.14) : "#0c0e14";
+      pill(nd.x, nd.y, nd.w, nd.h, 13); ctx.fill();
+      ctx.shadowBlur = 0;
+
+      ctx.strokeStyle = rgba(c, anchor ? 0.85 : nd.side ? 0.4 : 0.22);
+      ctx.lineWidth = anchor ? 1.6 : 1;
+      ctx.stroke();
+
+      ctx.font = `${anchor ? 600 : 400} 12px "JetBrains Mono", monospace`;
+      ctx.fillStyle = anchor ? rgba(c, 1) : nd.side ? "#e8eaf0" : "#6a7490";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(nd.word, nd.x, nd.y + .5);
+      ctx.restore();
+    }
+  }
+
+  function loop(now) { tick(); draw(now); requestAnimationFrame(loop); }
+
+  /* ---------- pointer ---------- */
+
+  const at = (ev) => {
+    const r = canvas.getBoundingClientRect();
+    return { x: ev.clientX - r.left, y: ev.clientY - r.top };
+  };
+  canvas.addEventListener("pointerdown", ev => {
+    const p = at(ev);
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      const nd = nodes[i];
+      if (Math.abs(p.x - nd.x) < nd.w / 2 && Math.abs(p.y - nd.y) < nd.h / 2) {
+        drag = { node: nd }; canvas.setPointerCapture(ev.pointerId);
+        canvas.classList.add("dragging"); alpha = Math.max(alpha, .6);
+        break;
+      }
+    }
+  });
+  canvas.addEventListener("pointermove", ev => {
+    if (!drag) return;
+    const p = at(ev);
+    drag.node.x = p.x; drag.node.y = p.y; drag.node.vx = drag.node.vy = 0;
+    alpha = Math.max(alpha, .4);
+  });
+  const release = () => { drag = null; canvas.classList.remove("dragging"); };
+  canvas.addEventListener("pointerup", release);
+  canvas.addEventListener("pointercancel", release);
+
+  /* ---------- puzzle ---------- */
+
+  function mulberry32(seed) {
+    return () => {
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // Anchors come from the common slice of the vocabulary — obscure words make
+  // for an unfair start — and must be genuinely unrelated.
+  function pickAnchors(rand) {
+    const pool = Math.min(2500, vocab.length);
+    for (let i = 0; i < 800; i++) {
+      const a = Math.floor(rand() * pool), b = Math.floor(rand() * pool);
+      if (a === b) continue;
+      const s = sim(a, b);
+      if (s > -0.05 && s < 0.10) return [a, b];
+    }
+    return [0, 1];
+  }
+
+  function newGame() {
+    const rand = mulberry32((Math.random() * 1e9) | 0);
+    board = pickAnchors(rand);
+    played = 0; solved = false;
+    nodes = [];
+    addNode(0, W * 0.22, H / 2);
+    addNode(1, W * 0.78, H / 2);
+    alpha = 1;
+    els.won.hidden = true;
+    els.entry.disabled = false; els.add.disabled = false; els.entry.value = "";
+    say("Type any word. It doesn't have to be close to either one — it has to sit between them.");
+    render();
+    els.entry.focus();
+  }
+
+  /* ---------- render ---------- */
+
+  function say(t, tone) { els.msg.textContent = t; els.msg.className = "msg" + (tone ? " " + tone : ""); }
+
+  function render() {
+    const { width, path } = widestPath(0, 1);
+    retopo(width, path);
+
+    els.gap.textContent = pct(width);
+    els.gap.classList.toggle("met", width >= target);
+    els.played.textContent = played;
+
+    els.route.hidden = path.length < 2;
+    els.hops.innerHTML = "";
+    for (let i = 0; i < path.length - 1; i++) {
+      const s = sim(board[path[i]], board[path[i + 1]]);
+      const row = document.createElement("div");
+      row.className = "hop" + (Math.abs(s - width) < 1e-9 ? " weakest" : "");
+      row.innerHTML =
+        `<span class="w">${vocab[board[path[i]]]}</span>` +
+        `<span class="rule"></span>` +
+        `<span class="w">${vocab[board[path[i + 1]]]}</span>` +
+        `<span class="p">${pct(s)}</span>`;
+      els.hops.appendChild(row);
+    }
+
+    if (width >= target && !solved) {
+      solved = true;
+      els.won.hidden = false;
+      els.wonText.textContent =
+        `${vocab[board[0]]} to ${vocab[board[1]]} at ${pct(width)} — ` +
+        `${played} word${played === 1 ? "" : "s"} played, ${path.length - 2} on the route.`;
+      els.entry.disabled = true; els.add.disabled = true;
+      say("");
+    }
+  }
+
+  /* ---------- turns ---------- */
+
+  function submit() {
+    if (solved) return;
+    const raw = els.entry.value.trim().toLowerCase();
+    if (!raw) return;
+
+    if (!index.has(raw)) { say(`"${raw}" isn't in the vocabulary. Try a more common word.`, "bad"); return; }
+    const id = index.get(raw);
+    if (board.includes(id)) { say(`"${raw}" is already on the board.`, "bad"); return; }
+    if (board.length >= MAX_WORDS) { say(`Board is full at ${MAX_WORDS} words. Start a new round.`, "bad"); return; }
+
+    const before = widestPath(0, 1).width;
+
+    board.push(id);
+    played++;
+
+    // Drop it in near whatever it's most like, so it doesn't fly across screen.
+    let host = 0, bestSim = -9;
+    for (let i = 0; i < board.length - 1; i++) {
+      const s = sim(id, board[i]);
+      if (s > bestSim) { bestSim = s; host = i; }
+    }
+    const hn = nodes[host];
+    addNode(board.length - 1, hn.x + (Math.random() - .5) * 60, hn.y + (Math.random() - .5) * 60);
+    alpha = 1;
+
+    const after = widestPath(0, 1).width;
+    els.entry.value = "";
+    render();
+
+    if (!solved) {
+      const d = after - before;
+      if (d > 0.0001) say(`+${(d * 100).toFixed(1)} — the gap narrowed to ${pct(after)}.`, "good");
+      else say(`No help. "${raw}" doesn't sit on the route between them.`);
+    }
+  }
+
+  /* ---------- boot ---------- */
+
+  async function boot() {
+    try {
+      const [meta, words, blob, bbuf] = await Promise.all([
+        fetch(DATA + "meta.json").then(r => r.json()),
+        fetch(DATA + "vocab.json").then(r => r.json()),
+        fetch(DATA + "vectors.bin").then(r => r.arrayBuffer()),
+        fetch(DATA + "bias.bin").then(r => r.arrayBuffer()),
+      ]);
+
+      vocab = words; dim = meta.dim; target = meta.target ?? 0.45;
+      LO = meta.lo; HI = meta.hi;
+      bias = new Float32Array(bbuf);
+      index = new Map(vocab.map((w, i) => [w, i]));
+
+      // Dequantize once, renormalize once, then never allocate again.
+      const raw = new Int8Array(blob);
+      vecs = new Float32Array(raw.length);
+      for (let i = 0; i < raw.length; i++) vecs[i] = raw[i] * meta.scale;
+      for (let r = 0; r < vocab.length; r++) {
+        const off = r * dim;
+        let n = 0;
+        for (let k = 0; k < dim; k++) n += vecs[off + k] * vecs[off + k];
+        n = Math.sqrt(n) || 1;
+        for (let k = 0; k < dim; k++) vecs[off + k] /= n;
+      }
+
+      els.target.textContent = pct(target);
+      fit();
+      newGame();
+      requestAnimationFrame(loop);
+    } catch (err) {
+      console.error(err);
+      say("Couldn't load the vocabulary. Check that data/ sits next to this page, " +
+          "and serve over http — fetch won't read file://.", "bad");
+    }
+  }
+
+  addEventListener("resize", () => { fit(); alpha = Math.max(alpha, .5); });
+  els.add.addEventListener("click", submit);
+  els.entry.addEventListener("keydown", e => { if (e.key === "Enter") submit(); });
+  els.fresh.addEventListener("click", newGame);
+
+  boot();
+})();
+</script>
+</body>
+</html>

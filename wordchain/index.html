@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Widest Path — a word chain game by Ismail Jabri</title>
+<title>Lixicon — a word chain game by Ismail Jabri</title>
 <meta name="description" content="Bridge two unrelated words by building a chain of meaning. Your score is your weakest link." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -222,7 +222,7 @@
   <a href="/ismail-jabri-portfolio/" class="back">&larr; back to portfolio</a>
 
   <span class="eyebrow">// Word game</span>
-  <h1>Widest Path</h1>
+  <h1>Lixicon</h1>
   <p class="tagline">
     Two words that have nothing to do with each other. Add words until meaning flows
     between them. Links only appear once they're stronger than your
@@ -276,7 +276,7 @@
       which is why the two halves stay apart until you've genuinely bridged them.
     </p>
     <p style="margin-top:.9rem;">
-      Finding your best route is the <em>widest path problem</em>: Dijkstra's, but
+      Finding your best route is the <em>Lixicon problem</em>: Dijkstra's, but
       maximizing the minimum edge instead of summing them. That bottleneck is your score.
       Layout is a hand-rolled force simulation — springs on the links, repulsion
       everywhere else.
@@ -331,7 +331,7 @@
   const sim = (a, b) => (2 * dot(a, b) - bias[a] - bias[b] - LO) / (HI - LO);
   const pct = v => (v * 100).toFixed(1) + "%";
 
-  /* ---------- widest path ---------- */
+  /* ---------- Lixicon ---------- */
 
   // Dijkstra with min-plus swapped for max-min. The board never exceeds ~26
   // nodes, so the O(n^2) scan is free and a heap would be theater.
